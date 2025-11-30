@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CNN Architecture - Mushroom Disease Detection</title>
+  <style>
+    /* ===== Reset & Base ===== */
+    * {
+      margin: 0; padding: 0; box-sizing: border-box;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    }
+    body {
+      background-color: whitesmoke;
+      color: black;
+      line-height: 1.6;
+    }
+    h1, h2, h3, h4 { color: black; margin-bottom: 0.5rem; }
+    p { margin-bottom: 1rem; }
+
+    .container {
+      max-width: 1200px;
+      margin: auto;
+      padding: 2rem 1rem;
+    }
+
+    /* ===== Navbar Styles ===== */
+    header {
+      position: sticky; top: 0; z-index: 50;
+      background: #0f172a;
+      border-bottom: 1px solid #1e293b;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+      max-height: 5.5em;
+    }
+    .navbar {
+      max-width: 1200px;
+      margin: auto;
+      padding: 0.8rem 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 2.5em;
+    }
+    .logo {
+      display: flex; align-items: center; 
+    }
+    .logo h1 {
+      font-size: 1.9rem; color: #fff; font-weight: bold;
+    }
+    .logo h4 {
+      font-size: 1.2rem; color: #94a3b8;
+    }
+
+    /* Links */
+    .nav-links {
+      list-style: none;
+      display: flex; gap: 0.5rem;
+    }
+    .nav-links li a {
+      text-decoration: none;
+      color: #cbd5e1;
+      font-size: 0.9rem;
+      padding: 0.5rem 0.8rem;
+      border-radius: 0.5rem;
+      transition: 0.3s;
+    }
+    .nav-links li a:hover {
+      background: #1e293b;
+      color: #fff;
+    }
+
+    /* Mobile Toggle */
+    .menu-toggle {
+      display: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: #cbd5e1;
+    }
+    @media (max-width: 768px) {
+      .nav-links {
+        display: none;
+        flex-direction: column;
+        background: #1e293b;
+        position: absolute;
+        top: 60px; right: 0;
+        width: 200px;
+        padding: 1rem;
+        border-radius: 0.5rem;
+      }
+      .nav-links.active { display: flex; }
+      .menu-toggle { display: block; }
+    }
+
+    /* ===== Header Section ===== */
+    .header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .icon-box {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      background: rgba(128,0,128,0.1);
+      border-radius: 12px;
+      margin-bottom: 1rem;
+      font-size: 1.8rem;
+      color: purple;
+    }
+
+    /* ===== Stats Grid ===== */
+    .grid {
+      display: grid;
+      gap: 1.5rem;
+    }
+    .grid-4 { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+    .grid-2 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+
+    .card {
+      background: white;
+      border: 1px solid #ccc;
+      border-radius: 12px;
+      padding: 1.5rem;
+      transition: 0.3s;
+    }
+    .card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+
+    .step {
+      text-align: center;
+      padding: 1rem;
+    }
+    .step-number {
+      width: 50px; height: 50px;
+      border-radius: 50%;
+      background: rgba(128,0,128,0.1);
+      color: purple;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: bold;
+      font-size: 1.2rem;
+      margin: auto;
+      margin-bottom: 0.5rem;
+    }
+    ul { list-style: none; padding: 0; }
+    ul li { display: flex; align-items: flex-start; margin-bottom: 0.8rem; }
+    ul li div {
+      width: 8px; height: 8px;
+      background: purple;
+      border-radius: 50%;
+      margin-right: 10px;
+      margin-top: 6px;
+    }
+
+    /* Updated Navbar Styles */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid #1e293b;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+    }
+
+    .navbar {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0.8rem 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
+
+    .logo-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #10b981, #34d399);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      color: #fff;
+      font-weight: bold;
+    }
+
+    .logo-text {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.2;
+    }
+
+    .logo-text h1 {
+      font-size: 1.5rem;
+      margin: 0;
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .logo-text p {
+      margin: 0;
+      font-size: 0.85rem;
+      color: #94a3b8;
+    }
+
+    .nav-links {
+      list-style: none;
+      display: flex;
+      gap: 1rem;
+      margin: 0;
+      padding: 0;
+    }
+
+    .nav-links li a {
+      text-decoration: none;
+      color: #cbd5e1;
+      font-size: 0.95rem;
+      font-weight: 500;
+      padding: 0.6rem 1rem;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+    }
+
+    .nav-links li a:hover,
+    .nav-links li a.active {
+      background: #1e293b;
+      color: #10b981;
+    }
+
+    .menu-toggle {
+      display: none;
+      font-size: 1.8rem;
+      cursor: pointer;
+      color: #cbd5e1;
+    }
+
+    @media (max-width: 768px) {
+      .nav-links {
+        display: none;
+        flex-direction: column;
+        background: #1e293b;
+        position: absolute;
+        top: 65px;
+        right: 10px;
+        width: 220px;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+      }
+
+      .nav-links.active {
+        display: flex;
+      }
+
+      .menu-toggle {
+        display: block;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header / Navbar -->
+  <header>
+    <nav class="navbar">
+      <div class="logo">
+        <div class="logo-icon">🍄</div>
+        <div class="logo-text">
+          <h1>MushroomAI</h1>
+          <p>Disease Detection</p>
+        </div>
+      </div>
+
+      <ul class="nav-links" id="nav-links">
+        <li><a href="{{ url_for('home_page') }}">Home</a></li>
+        <li><a href="{{ url_for('dataset_page')}}">Dataset</a></li>
+        <li><a href="{{ url_for('model_page')}}">Model</a></li>
+        <li><a href="{{ url_for('detection_page') }}" class="{% if '/detection' in request.path %}active{% endif %}">Detection</a></li>
+      </ul>
+
+      <div class="menu-toggle" onclick="toggleMenu()">☰</div>
+    </nav>
+  </header>
+
+  <div class="container">
+    <!-- Page Header -->
+    <div class="header">
+      <h1>CNN Architecture</h1>
+      <p>
+        Deep convolutional neural network designed specifically for mushroom disease classification.  
+        Optimized architecture balancing accuracy and inference speed.
+      </p>
+    </div>
+
+    <!-- Stats -->
+    <div class="grid grid-4" style="margin-bottom:2rem;">
+      <div class="card">
+        <div style="font-size:2rem; margin-bottom:0.5rem;">📚</div>
+        <div style="font-size:1.5rem; font-weight:bold;">11 Layers</div>
+        <div>Network Depth</div>
+      </div>
+      <div class="card">
+        <div style="font-size:2rem; margin-bottom:0.5rem;">💻</div>
+        <div style="font-size:1.5rem; font-weight:bold;">2.1M</div>
+        <div>Parameters</div>
+      </div>
+      <div class="card">
+        <div style="font-size:2rem; margin-bottom:0.5rem;">⚡</div>
+        <div style="font-size:1.5rem; font-weight:bold;">1.2s</div>
+        <div>Inference Time</div>
+      </div>
+      <div class="card">
+        <div style="font-size:2rem; margin-bottom:0.5rem;">🧠</div>
+        <div style="font-size:1.5rem; font-weight:bold;">50</div>
+        <div>Training Epochs</div>
+      </div>
+    </div>
+
+    <!-- Training & Features -->
+    <div class="grid grid-2" style="margin-bottom:2rem;">
+      <div class="card">
+        <h3>Training Configuration</h3>
+        <ul>
+          <li><div></div> Optimizer: <strong>Adam</strong></li>
+          <li><div></div> Learning Rate: <strong>0.001</strong></li>
+          <li><div></div> Batch Size: <strong>32</strong></li>
+          <li><div></div> Loss Function: <strong>Categorical Crossentropy</strong></li>
+          <li><div></div> Activation: <strong>ReLU + Softmax</strong></li>
+          <li><div></div> Regularization: <strong>Dropout (0.5)</strong></li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Key Features</h3>
+        <ul>
+          <li><div></div> Multi-scale feature extraction through convolutional layers</li>
+          <li><div></div> Spatial dimension reduction via max pooling</li>
+          <li><div></div> Dropout regularization prevents overfitting</li>
+          <li><div></div> Softmax output provides probability distribution</li>
+          <li><div></div> Optimized for real-time inference on standard hardware</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- How Detection Works -->
+    <div class="card">
+      <h3>How Detection Works</h3>
+      <div class="grid grid-4">
+        <div class="step">
+          <div class="step-number">1</div>
+          <h4>Image Input</h4>
+          <p>Upload image is preprocessed and resized to 224x224 pixels</p>
+        </div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <h4>Feature Extraction</h4>
+          <p>CNN layers detect edges, textures, and disease patterns</p>
+        </div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <h4>Classification</h4>
+          <p>Dense layers map features to 10 disease categories</p>
+        </div>
+        <div class="step">
+          <div class="step-number">4</div>
+          <h4>Prediction Output</h4>
+          <p>Softmax provides confidence scores for each disease</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JS -->
+  <script>
+    function toggleMenu() {
+      document.getElementById("nav-links").classList.toggle("active");
+    }
+  </script>
+</body>
+</html>

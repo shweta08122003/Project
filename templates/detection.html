@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Disease Detection - Mushroom AI</title>
+  <style>
+    /* --- CSS Styling --- */
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #ffffff;
+      color: #000000;
+    }
+    .container { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
+    h1 { font-size: 2.5rem; font-weight: bold; margin-bottom: 10px; }
+    p { color: #333; }
+    
+    /* Upload & Result Cards Updated to White Theme */
+    .upload-section, .result-section {
+      background: #ffffff;
+      border: 1px solid #d0d7e2;
+      border-radius: 15px;
+      padding: 30px;
+      margin-bottom: 20px;
+      color: #000000;
+    }
+
+    .upload-box { 
+      border: 2px dashed #475569; 
+      border-radius: 15px; 
+      padding: 50px; 
+      text-align: center; 
+      cursor: pointer; 
+      transition: 0.3s;
+      color: #000;
+    }
+    .upload-box:hover { border-color: #10b981; background: #f1fdf7; }
+    .upload-box img { max-width: 100%; border-radius: 15px; }
+    .button { background: #059669; color: #fff; font-weight: 600; padding: 12px 16px; border: none; border-radius: 8px; cursor: pointer; width: 100%; transition: 0.3s; }
+    .button:hover { background: #047857; }
+    .button:disabled { background: #475569; cursor: not-allowed; }
+    .tips { margin-top: 25px; font-size: 0.9rem; }
+    .tips li { margin-bottom: 5px; color: #555; }
+    .progress-bar { width: 100%; background: #e2e8f0; border-radius: 5px; overflow: hidden; height: 10px; margin-top: 5px; }
+    .progress-fill { height: 100%; background: linear-gradient(to right, #10b981, #34d399); width: 0%; transition: width 0.8s ease-in-out; }
+    
+    .info-box { background: #f9f9f9; border: 1px solid #d0d7e2; border-radius: 10px; padding: 20px; margin-top: 20px; color: #000; }
+    .center { text-align: center; padding: 60px 0; color: #555; }
+    
+    header { position: sticky; top: 0; z-index: 50; background:black; backdrop-filter: blur(10px); border-bottom: 1px solid #e5e7eb; }
+    .navbar { max-width: 1200px; margin: 0 auto; padding: 0.8rem 1rem; display: flex; align-items: center; justify-content: space-between; }
+    
+    .logo { display: flex; align-items: center; gap: 0.8rem; }
+    .logo-icon { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #10b981, #34d399); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: #fff; font-weight: bold; }
+    .logo-text h1 { font-size: 1.5rem; margin: 0; color: white; font-weight: 700; }
+    .logo-text p { font-size: 0.8rem; margin: 0; color: white; }
+    
+    .nav-links { list-style: none; display: flex; gap: 1rem; margin: 0; padding: 0; }
+    .nav-links li a { text-decoration: none; color: white; font-size: 0.95rem; font-weight: 500; padding: 0.6rem 1rem; border-radius: 8px; transition: all 0.3s ease; }
+    .nav-links li a:hover, .nav-links li a.active { background: #10b981; color: #ffffff; }
+
+    @media (max-width: 768px) {
+      .nav-links {
+        display: none;
+        flex-direction: column;
+        background: #ffffff;
+        position: absolute;
+        top: 65px;
+        right: 10px;
+        width: 220px;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      }
+      .nav-links.active { display: flex; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header / Navbar -->
+  <header>
+    <nav class="navbar">
+      <div class="logo">
+        <div class="logo-icon">🍄</div>
+        <div class="logo-text">
+          <h1>MushroomAI</h1>
+          <p>Disease Detection</p>
+        </div>
+      </div>
+      <ul class="nav-links" id="nav-links">
+        <li><a href="{{ url_for('home_page') }}" class="{% if request.path == '/' %}active{% endif %}">Home</a></li>
+        <li><a href="{{ url_for('dataset_page') }}" class="{% if '/dataset' in request.path %}active{% endif %}">Dataset</a></li>
+        <li><a href="{{ url_for('model_page') }}" class="{% if '/model' in request.path %}active{% endif %}">Model</a></li>
+        <li><a href="{{ url_for('detection_page') }}" class="{% if '/detection' in request.path %}active{% endif %}">Detection</a></li>
+      </ul>
+      <div class="menu-toggle" onclick="toggleMenu()">☰</div>
+    </nav>
+  </header>
+
+  <!-- Main Content -->
+  <div class="container">
+    <div class="text-center" style="text-align:center;margin-bottom:40px;">
+      <div style="display:inline-block;background:#e8fdf3;padding:15px;border-radius:10px;margin-bottom:10px;">
+        <span style="color:#10b981;font-size:24px;">⬆️</span>
+      </div>
+      <h1>Disease Detection</h1>
+      <p>Upload a mushroom image for instant AI-powered disease analysis.</p>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;">
+      
+      <!-- Upload Section -->
+      <div class="upload-section">
+        <h2 style="margin-bottom:20px;">Upload Image</h2>
+        <div id="upload-area" class="upload-box">
+          <p><strong>Click to upload mushroom image</strong></p>
+          <p style="font-size:0.9rem;color:#555;">PNG, JPG up to 10MB</p>
+        </div>
+        <input type="file" id="image-input" accept="image/*" style="display:none;" />
+        <div id="uploaded-preview" style="display:none;">
+          <img id="preview-img" src="" alt="Preview" style="width:100%;margin-top:15px;" />
+          <div style="display:flex;gap:10px;margin-top:15px;">
+            <label for="image-input" class="button" style="background:#475569;flex:1;text-align:center;">Change Image</label>
+            <button id="detect-btn" class="button" style="flex:1;">Detect Disease</button>
+          </div>
+        </div>
+        <div class="tips">
+          <h3>Tips for Best Results</h3>
+          <ul>
+            <li>Use clear, well-lit images</li>
+            <li>Focus on the affected area</li>
+            <li>Avoid blurry or low-resolution photos</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Results Section -->
+      <div class="result-section">
+        <h2 style="margin-bottom:20px;">Detection Results</h2>
+        <div id="result-area" class="center">Upload an image to see detection results</div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    function toggleMenu() {
+      document.getElementById('nav-links').classList.toggle('active');
+    }
+
+    const uploadArea = document.getElementById('upload-area');
+    const imageInput = document.getElementById('image-input');
+    const previewImg = document.getElementById('preview-img');
+    const uploadedPreview = document.getElementById('uploaded-preview');
+    const detectBtn = document.getElementById('detect-btn');
+    const resultArea = document.getElementById('result-area');
+
+    uploadArea.addEventListener('click', () => imageInput.click());
+
+    imageInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          previewImg.src = reader.result;
+          uploadedPreview.style.display = 'block';
+          uploadArea.style.display = 'none';
+          resultArea.innerHTML = '<p class="center">Ready for detection...</p>';
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    function showLoading() {
+      resultArea.innerHTML = `
+        <div class="center">
+          <div style="font-size:2rem;color:#10b981;">🔄</div>
+          <p style="font-weight:600;">Analyzing Image...</p>
+          <p style="font-size:0.9rem;color:#555;">CNN model processing</p>
+        </div>
+      `;
+    }
+
+    detectBtn.addEventListener('click', () => {
+      const file = imageInput.files[0];
+      if (!file) {
+        alert("Please upload an image first!");
+        return;
+      }
+
+      detectBtn.disabled = true;
+      showLoading();
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      fetch('{{ url_for("predict") }}', { 
+        method: 'POST',
+        body: formData
+      })
+      .then(async (res) => {
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Server error');
+        return data;
+      })
+      .then(data => {
+        const confidence = data.confidence ?? (data.top3?.[0]?.confidence ?? 0);
+        resultArea.innerHTML = `
+          <div class="info-box">
+            <h3 style="color:#10b981;">✅ Detection Complete</h3>
+            <p style="color:#333;">Predicted Diseases:</p>
+            <h2 style="text-transform:capitalize;">${data.predicted_label}</h2>
+
+            <div style="margin-top:15px;">
+              <p style="color:#555;font-size:0.9rem;">Confidence Score</p>
+              <div class="progress-bar"><div class="progress-fill" style="width:0%;" id="progress-fill"></div></div>
+              <p style="margin-top:5px;font-size:1.2rem;font-weight:bold;" id="conf-text">${confidence}%</p>
+            </div>
+
+            <div style="margin-top:15px;">
+              <p style="color:#555;font-size:0.9rem;">Top Predictions</p>
+              <ol id="top-list" style="padding-left:18px;color:#000;">
+                ${data.top3.map(t => `<li>${t.label} — ${t.confidence}%</li>`).join('')}
+              </ol>
+            </div>
+
+            <div style="margin-top:25px;">
+              <h3 style="color:#10b981;">Possible Reasons</h3>
+              <ul style="color:#000;list-style:disc;margin-left:20px;">
+                ${data.reasons.map(r => `<li>${r}</li>`).join('')}
+              </ul>
+
+              <h3 style="color:#10b981;margin-top:15px;">Recommended Pesticides</h3>
+              <ul style="color:#000;list-style:disc;margin-left:20px;">
+                ${data.pesticides.map(p => `<li>${p}</li>`).join('')}
+              </ul>
+            </div>
+          </div>
+
+          <button class="button" id="analyze-again" style="margin-top:20px;">Analyze Another Image</button>
+        `;
+
+        setTimeout(() => {
+          const fill = document.getElementById('progress-fill');
+          if (fill) fill.style.width = `${confidence}%`;
+        }, 100);
+
+        document.getElementById('analyze-again').addEventListener('click', () => {
+          uploadArea.style.display = 'block';
+          uploadedPreview.style.display = 'none';
+          resultArea.innerHTML = 'Upload an image to see detection results';
+          detectBtn.disabled = false;
+          previewImg.src = '';
+          imageInput.value = '';
+        });
+      })
+      .catch(err => {
+        resultArea.innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
+        detectBtn.disabled = false;
+      });
+    });
+  </script>
+</body>
+</html>
